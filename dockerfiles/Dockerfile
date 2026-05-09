@@ -14,10 +14,18 @@ RUN rm -rf /var/lib/apt/lists/* \
 RUN npm install --global vlocity
 RUN echo "y" | sf plugins install sf-orgdevmode-builds
 RUN sf plugins install @salesforce/sfdx-scanner@latest
+RUN sf plugins install sfdmu
 
 # --- Omnistudio local compiler registry configuration ---
 RUN npm config set @omnistudio:registry https://repo.vlocity.com/repository/vlocity-public/
 RUN npm config set @vlocity-cme:registry https://repo.vlocity.com/repository/vlocity-public/
+
+# --- Omnistudio & FlexCard compilers (auth key injected via BuildKit secret) ---
+RUN --mount=type=secret,id=vlocity_auth_key \
+    npm config set //repo.vlocity.com/repository/vlocity-public/:_auth=$(cat /run/secrets/vlocity_auth_key) \
+  && npm install -g @vlocity-cme/omniscript-lwc-compiler \
+  && npm install -g @vlocity-cme/flexcard-compiler \
+  && npm config delete //repo.vlocity.com/repository/vlocity-public/:_auth
 
 # --- GitHub CLI Setup ---
 RUN mkdir -p -m 755 /etc/apt/keyrings \
